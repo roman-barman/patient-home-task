@@ -8,6 +8,7 @@ using Patient.Application.DTO;
 using Patient.Application.Queries;
 using Patient.Infrastructure;
 using Patient.Infrastructure.Mongo.Settings;
+using Swashbuckle.AspNetCore.Annotations;
 using static System.Net.Mime.MediaTypeNames;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,7 +60,8 @@ app.MapPost("/patients", async (PatientDTO patient, IMediator mediator) =>
     var response = await mediator.Send(new GetPatientQuery(id));
 
     return Results.Created($"/patients/{id}", response);
-});
+})
+.WithMetadata(new SwaggerOperationAttribute(summary: "Create patient"));
 
 app.MapPut("/patients/{id}", async (Guid id, PatientDTO patient, IMediator mediator) =>
 {
@@ -67,21 +69,24 @@ app.MapPut("/patients/{id}", async (Guid id, PatientDTO patient, IMediator media
     var response = await mediator.Send(new GetPatientQuery(id));
 
     return isUpdated ? Results.Ok(response) : Results.Created($"/patients/{id}", response);
-});
+})
+.WithMetadata(new SwaggerOperationAttribute(summary: "Update or create patient"));
 
 app.MapGet("/patients/{id}", async (Guid id, IMediator mediator) =>
 {
     var patient = await mediator.Send(new GetPatientQuery(id));
 
     return Results.Ok(patient);
-});
+})
+.WithMetadata(new SwaggerOperationAttribute(summary: "Get patient by ID"));
 
 app.MapDelete("/patients/{id}", async (Guid id, IMediator mediator) =>
 {
     await mediator.Send(new DeletePatientCommand(id));
 
     return Results.NoContent();
-});
+})
+.WithMetadata(new SwaggerOperationAttribute(summary: "Delete patient"));
 
 app.MapGet("/patients", async ([FromQuery(Name = "birthDate")] string birthDateSearch, ISearchBirthDateParser searchParser, IMediator mediator) =>
 {
@@ -89,6 +94,7 @@ app.MapGet("/patients", async ([FromQuery(Name = "birthDate")] string birthDateS
     var patients = await mediator.Send(new GetPatientByBirthDateQuery(searchOpeartion, date));
 
     return Results.Ok(patients);
-});
+})
+.WithMetadata(new SwaggerOperationAttribute(summary: "Find patients by birth date"));
 
 app.Run();
