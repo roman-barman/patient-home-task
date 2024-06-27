@@ -1,3 +1,4 @@
+using Patient.Api.Exceptions;
 using Patient.Api.Models;
 using Patient.Application.Exceptions;
 using Patient.Core.Exceptions;
@@ -11,6 +12,10 @@ public sealed class ExceptionToResponseMapper : IExceptionToResponseMapper
         DomainException ex => new ExceptionResponse(ex.Message, 400),
         PatientNotFoundException ex => new ExceptionResponse(ex.Message, 404),
         ResourceAlreadyExistsException ex => new ExceptionResponse(ex.Message, 400),
+        SearchStringIsNullOrEmptyException ex => new ExceptionResponse(ex.Message, 400),
+        InvalidSearchStringException ex => new ExceptionResponse(ex.Message, 400),
+        InvalidSearchOperationException ex => new ExceptionResponse(ex.Message, 400),
+        InvalidSearchDateException ex => new ExceptionResponse(ex.Message, 400),
         _ => new ExceptionResponse("Internal error", 500)
     };
 }

@@ -1,3 +1,5 @@
+using Patient.Application.Searches;
+
 namespace Patient.Application.Services;
 
 public interface IPatientRepository
@@ -7,4 +9,5 @@ public interface IPatientRepository
     Task AddAsync(Core.Entities.Patient patient);
     Task UpdateAsync(Core.Entities.Patient patient);
     Task DeleteAsync(Guid id);
+    Task<IReadOnlyCollection<Core.Entities.Patient>> SearchByDate(SearchOperation operation, DateSearch date);
 }

@@ -1,5 +1,7 @@
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Patient.Api.Mappers;
+using Patient.Api.Parsers;
 using Patient.Application;
 using Patient.Application.Commands;
 using Patient.Application.DTO;
@@ -14,6 +16,7 @@ builder.Services
     .Configure<PatientMongoRepositorySetting>(builder.Configuration.GetSection("PatientMongoRepository"));
 
 builder.Services.AddSingleton<IExceptionToResponseMapper, ExceptionToResponseMapper>();
+builder.Services.AddSingleton<ISearchBirthDateParser, SearchBirthDateParser>();
 
 builder.Services
     .AddApplication()
@@ -78,6 +81,14 @@ app.MapDelete("/patients/{id}", async (Guid id, IMediator mediator) =>
     await mediator.Send(new DeletePatientCommand(id));
 
     return Results.NoContent();
+});
+
+app.MapGet("/patients", async ([FromQuery(Name = "birthDate")] string birthDateSearch, ISearchBirthDateParser searchParser, IMediator mediator) =>
+{
+    var (searchOpeartion, date) = searchParser.Parse(birthDateSearch);
+    var patients = await mediator.Send(new GetPatientByBirthDateQuery(searchOpeartion, date));
+
+    return Results.Ok(patients);
 });
 
 app.Run();

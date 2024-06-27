@@ -13,6 +13,7 @@ public sealed class PatientDocument
     public string Gender { get; set; } = null!;
 
     [BsonElement("birthDate")]
+    [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
     public DateTime BirthDate { get; set; }
 
     [BsonElement("active")]

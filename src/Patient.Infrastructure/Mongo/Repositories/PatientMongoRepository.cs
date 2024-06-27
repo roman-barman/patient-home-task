@@ -3,6 +3,7 @@ using Patient.Infrastructure.Mongo.Documents;
 using Patient.Infrastructure.Mongo.Settings;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using Patient.Application.Searches;
 
 namespace Patient.Infrastructure.Mongo.Repositories;
 
@@ -47,5 +48,37 @@ public sealed class PatientMongoRepository : IPatientRepository
         await patientsCollection.ReplaceOneAsync(filter, patient.AsDocument());
     }
 
-    private static FilterDefinition<PatientDocument> CreateFilterForId(Guid id) => Builders<PatientDocument>.Filter.Eq("name._id", id.ToString());
+    public async Task<IReadOnlyCollection<Core.Entities.Patient>> SearchByDate(SearchOperation operation, DateSearch date)
+    {
+        var filter = date.IsDateOnly ? CreateFilterForBirthDate(operation, date.GetDateOnly()) : CreateFilterForBirthDate(operation, date.GetDateTime());
+
+        return (await patientsCollection.FindAsync(filter))
+            .ToList()
+            .Select(x => x.AsDomain())
+            .ToList();
+    }
+
+    private static FilterDefinition<PatientDocument> CreateFilterForBirthDate(SearchOperation operation, DateOnly date) => operation switch
+    {
+        SearchOperation.Eq or SearchOperation.Ap => Builders<PatientDocument>.Filter.Gte(x => x.BirthDate, date.ToDateTime(TimeOnly.MinValue)) & Builders<PatientDocument>.Filter.Lt(x => x.BirthDate, date.AddDays(1).ToDateTime(TimeOnly.MinValue)),
+        SearchOperation.Ne => Builders<PatientDocument>.Filter.Lt(x => x.BirthDate, date.ToDateTime(TimeOnly.MinValue)) | Builders<PatientDocument>.Filter.Gte(x => x.BirthDate, date.AddDays(1).ToDateTime(TimeOnly.MinValue)),
+        SearchOperation.Lt or SearchOperation.Eb => Builders<PatientDocument>.Filter.Lt(x => x.BirthDate, date.ToDateTime(TimeOnly.MinValue)),
+        SearchOperation.Gt or SearchOperation.Sa => Builders<PatientDocument>.Filter.Gte(x => x.BirthDate, date.AddDays(1).ToDateTime(TimeOnly.MinValue)),
+        SearchOperation.Ge => Builders<PatientDocument>.Filter.Gte(x => x.BirthDate, date.ToDateTime(TimeOnly.MinValue)),
+        SearchOperation.Le => Builders<PatientDocument>.Filter.Lte(x => x.BirthDate, date.ToDateTime(TimeOnly.MaxValue)),
+        _ => throw new ArgumentOutOfRangeException(nameof(operation))
+    };
+
+    private static FilterDefinition<PatientDocument> CreateFilterForBirthDate(SearchOperation operation, DateTime date) => operation switch
+    {
+        SearchOperation.Eq or SearchOperation.Ap => Builders<PatientDocument>.Filter.Eq(x => x.BirthDate, date),
+        SearchOperation.Ne => Builders<PatientDocument>.Filter.Ne(x => x.BirthDate, date),
+        SearchOperation.Lt or SearchOperation.Eb => Builders<PatientDocument>.Filter.Lt(x => x.BirthDate, date),
+        SearchOperation.Gt or SearchOperation.Sa => Builders<PatientDocument>.Filter.Gt(x => x.BirthDate, date),
+        SearchOperation.Ge => Builders<PatientDocument>.Filter.Gte(x => x.BirthDate, date),
+        SearchOperation.Le => Builders<PatientDocument>.Filter.Lte(x => x.BirthDate, date),
+        _ => throw new ArgumentOutOfRangeException(nameof(operation))
+    };
+
+    private static FilterDefinition<PatientDocument> CreateFilterForId(Guid id) => Builders<PatientDocument>.Filter.Eq(x => x.Name.Id, id.ToString());
 }
