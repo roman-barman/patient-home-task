@@ -10,7 +10,7 @@ var surnames = "Иванов,Смирнов,Кузнецов,Попов,Васи
 var rand = new Random();
 var client = new HttpClient()
 {
-    BaseAddress = new Uri("http://localhost:5256"),
+    BaseAddress = new Uri("http://api:80"),
 };
 
 for (var i = 0; i < 100; i++)
