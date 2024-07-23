@@ -20,6 +20,10 @@ builder.Services.AddSingleton<IExceptionToResponseMapper, ExceptionToResponseMap
 builder.Services.AddSingleton<ISearchBirthDateParser, SearchBirthDateParser>();
 
 builder.Services
+    .AddHealthChecks()
+    .AddMongoDb(builder.Configuration["PatientMongoRepository:ConnectionURI"]);
+
+builder.Services
     .AddApplication()
     .AddInfrastructure();
 
@@ -49,6 +53,8 @@ app.Use(async (context, next) =>
         await context.Response.WriteAsync(response.Message);
     }
 });
+
+app.MapHealthChecks("/healthz");
 
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json",

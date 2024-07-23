@@ -10,4 +10,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:6.0
 WORKDIR /app
 EXPOSE 80
 COPY --from=build /app/out .
+
+RUN apt-get update && apt-get install -y curl
+
 ENTRYPOINT dotnet Patient.Api.dll
